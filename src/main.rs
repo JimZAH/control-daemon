@@ -7,7 +7,11 @@ use std::{
     time::Duration,
 };
 
-const TOPICS: &[&str] = &["repeater-control", "repeater-control/status", "repeater-control/lwt"];
+const TOPICS: &[&str] = &[
+    "repeater-control",
+    "repeater-control/status",
+    "repeater-control/lwt",
+];
 const QOS: &[i32] = &[1];
 
 /*
@@ -25,11 +29,21 @@ struct Config {
 }
 
 impl Cmd {
-    async fn process(&self, c: &mqtt::AsyncClient) {
+    async fn process(&self, c: &mqtt::AsyncClient) -> mqtt::Result<()> {
         match self.command_type.chars().next() {
             Some('C') => {
                 println!("Connect Command");
-                Cmd::response(&c, "Connecting").await
+                /*
+                 * Testing command
+                 */
+                let r = Command::new("sh")
+                    .arg("-c")
+                    .arg("asterisk")
+                    .output()
+                    .unwrap()
+                    .stdout;
+                let r = std::str::from_utf8(&r).unwrap();
+                Cmd::response(&c, &r).await
             }
             Some('D') => {
                 println!("Disconnect Command");
@@ -42,9 +56,9 @@ impl Cmd {
         }
     }
 
-    async fn response(c: &mqtt::AsyncClient, m: &str) {
+    async fn response(c: &mqtt::AsyncClient, m: &str) -> mqtt::Result<()> {
         let response = mqtt::message::Message::new(TOPICS[1], m, 1);
-        c.publish(response).await.unwrap()
+        c.publish(response).await
     }
 }
 
@@ -86,7 +100,7 @@ fn main() {
             if let Some(msg) = msg_opt {
                 println!("{}", msg);
                 if let Ok(cmd) = serde_json::from_str::<Cmd>(&msg.payload_str()) {
-                    cmd.process(&client).await;
+                    cmd.process(&client).await?
                 }
             } else {
                 println!("Lost connection. Attempting reconnect.");
