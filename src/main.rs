@@ -31,7 +31,7 @@ struct Config {
 impl Cmd {
     
     async fn exec(&self, args: Vec<&str>) -> Option<String> {
-        if let Ok(c) = Command::new("sh").args(args).output(){
+        if let Ok(c) = Command::new("sh").arg("-c").args(args).output(){
             /* unwrapping should be safe as we should never receive non utf8 from stdout */
             return Some(std::str::from_utf8(&c.stdout).unwrap().to_string())
         }
@@ -40,25 +40,25 @@ impl Cmd {
     
     async fn process(&self, c: &mqtt::AsyncClient) -> mqtt::Result<()> {
         match self.command_type.chars().next() {
-            Some('C') => {
-                println!("Connect Command");
+            Some('A') => {
                 /*
                  * Testing command
                  */
-                if let Some(r) = self.exec(vec!["-c", "asterisk", "-x", &self.command]).await{
-                    Cmd::response(c, &r).await?
+                if let Some(s) = self.exec(vec!["asterisk", "-x", &self.command]).await{
+                    Cmd::response(c, &s).await?
                 }
-                Ok(())
             }
-            Some('D') => {
-                println!("Disconnect Command");
-                Cmd::response(&c, "Disconnecting").await
+            Some('U') => {
+                if let Some(s) = self.exec(vec!["uptime"]).await{
+                    Cmd::response(c, &s).await?
+                }
             }
             _ => {
                 println!("Command not valid");
-                Cmd::response(&c, "Command type is not valid").await
+                Cmd::response(&c, "Command type is not valid").await?
             }
         }
+        Ok(())
     }
 
     async fn response(c: &mqtt::AsyncClient, m: &str) -> mqtt::Result<()> {
