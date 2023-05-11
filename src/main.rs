@@ -29,6 +29,15 @@ struct Config {
 }
 
 impl Cmd {
+    
+    async fn exec(&self, args: Vec<&str>) -> Option<String> {
+        if let Ok(c) = Command::new("sh").args(args).output(){
+            /* unwrapping should be safe as we should never receive non utf8 from stdout */
+            return Some(std::str::from_utf8(&c.stdout).unwrap().to_string())
+        }
+        None
+    } 
+    
     async fn process(&self, c: &mqtt::AsyncClient) -> mqtt::Result<()> {
         match self.command_type.chars().next() {
             Some('C') => {
@@ -36,14 +45,10 @@ impl Cmd {
                 /*
                  * Testing command
                  */
-                let r = Command::new("sh")
-                    .arg("-c")
-                    .arg("asterisk")
-                    .output()
-                    .unwrap()
-                    .stdout;
-                let r = std::str::from_utf8(&r).unwrap();
-                Cmd::response(&c, &r).await
+                if let Some(r) = self.exec(vec!["-c", "asterisk", "-x", &self.command]).await{
+                    Cmd::response(c, &r).await?
+                }
+                Ok(())
             }
             Some('D') => {
                 println!("Disconnect Command");
