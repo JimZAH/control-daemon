@@ -6,6 +6,7 @@ pub struct Config {
     pub host: String,
     pub name: String,
     pub topics: Vec<String>,
+    pub qos: Vec<i32>,
 }
 
 impl Config {
@@ -25,6 +26,7 @@ impl Config {
                 "repeater-control/status".to_string(),
                 "repeater-control/lwt".to_string(),
             ],
+            qos: vec![1],
         }
     }
 }

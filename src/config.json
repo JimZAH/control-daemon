@@ -5,5 +5,8 @@
         "repeater-control",
         "repeater-control/status",
         "repeater-control/lwt"
+    ],
+    "qos": [
+        1
     ]
 }

@@ -7,8 +7,6 @@ use std::{
     time::Duration,
 };
 
-const QOS: &[i32] = &[1];
-
 /*
  *  Struct which holds command data
  */
@@ -83,7 +81,7 @@ fn main() {
 
         client.connect(conn_opts).await?;
 
-        client.subscribe(&config.topics[0], QOS[0]).await?;
+        client.subscribe(&config.topics[0], config.qos[0]).await?;
 
         while let Some(msg_opt) = strm.next().await {
             if let Some(msg) = msg_opt {
