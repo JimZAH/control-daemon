@@ -16,7 +16,6 @@ const QOS: &[i32] = &[1];
 struct Cmd {
     command_type: String,
     command: String,
-    response_topic: String,
 }
 
 impl Cmd {
